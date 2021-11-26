@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+import argparse
 import fitparse
 import pandas as pd
 import math
@@ -139,9 +140,17 @@ def fitrecords_to_track(fitrecords):
 
 
 def main():
-    fitfile = fitparse.FitFile(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Plot Garmin Activity on a map")
+    parser.add_argument("-i", "--input", help="Input file", required=True, type=str)
+    parser.add_argument("-o", "--output", help="HTML output map file name (defaults to {input}.html", type=str)
+    args = parser.parse_args()
+
+    fitfile = fitparse.FitFile(args.input)
+    if args.output is None:
+        args.output = f"{''.join(args.input.split('.')[:-1])}.html"
+
     track = fitrecords_to_track(fitfile.get_messages('record'))
-    plot_osm_map(track, sys.argv[1] + '-osm.html')
+    plot_osm_map(track, args.output)
 
 if __name__ == "__main__":
     main()
