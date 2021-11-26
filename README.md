@@ -1,4 +1,6 @@
-Watch Mapper
+WatchMap
 
-Here's a collection of scripts to help me visualize data that I pulled off of my
-Garmin Instinct watch. 
+# Introduction
+
+Forked from [Bunnie's Watch Mapper](https://github.com/bunnie/watchmap) /
+https://www.bunniestudios.com/blog/?p=5863
