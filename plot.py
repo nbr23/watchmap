@@ -136,7 +136,7 @@ def fitrecords_to_track(fitrecords):
     df['speed'] = df.enhanced_speed * 3.6
     df['position_long'] = df['position_long'] * 180 / math.pow(2, 31)
     df['position_lat'] = df['position_lat'] * 180 / math.pow(2, 31)
-    return df
+    return df.dropna(subset=['position_long', 'position_lat'])
 
 
 def main():
