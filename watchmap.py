@@ -90,7 +90,9 @@ def plot_charts(track):
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
 
-def build_html(track, output):
+def build_html(fitfile, output):
+    track = fitrecords_to_track(fitfile.get_messages('record'))
+
     mapbuff = plot_map(track)
     chartsbuff = plot_charts(track)
     track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
@@ -172,8 +174,7 @@ def main():
     if args.output is None:
         args.output = f"{'.'.join(args.input.split('.')[:-1])}.html"
 
-    track = fitrecords_to_track(fitfile.get_messages('record'))
-    build_html(track, args.output)
+    build_html(fitfile, args.output)
 
 if __name__ == "__main__":
     main()
