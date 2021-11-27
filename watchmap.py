@@ -20,7 +20,7 @@ def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
 
 def add_to_layer(mapper, layer, pt, varname, varmin, varmax):
-    tooltip = f"Speed: {pt.speed:0.1f}kph<br/>Heart rate: {pt.heart_rate}bpm<br/>Altitude: {pt.enhanced_altitude:0.1f}m"
+    tooltip = f"Speed: {pt.speed:0.1f}kph<br/>Heart rate: {pt.heart_rate}bpm<br/>Altitude: {pt.enhanced_altitude:0.1f}m<br/>Time: {pt.timestamp}"
     folium.CircleMarker(
         location=(pt.position_lat, pt.position_long),
         radius=10+1.5*normalize_value(varmin, varmax, pt[varname]),
