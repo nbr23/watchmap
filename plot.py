@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 def speed_conversion(raw):
     return 3.6*raw # convert m/s to km/h
 
-def plot_osm_map(track, output='speed-map.html', hr=None):
+def plot_osm_map(track, output):
     speeds = track['speed']
     minima = min(speeds)
     maxima = max(speeds)
@@ -41,7 +41,33 @@ def plot_osm_map(track, output='speed-map.html', hr=None):
             weight=0,
         ).add_to(m)
 
-    m.save(output)
+    m.save(f'{".".join(output.split(".")[:-1])}-frame.html')
+
+    with open(output, "w") as f:
+        f.write('''
+        <!DOCTYPE html>
+        <html style="width: 100%; height: 100%; margin: 0; padding: 0">
+        <head>
+        </head>
+        <body style="width: 100%; height: 100%; margin: 0; padding: 0">
+        <div style="display: flex; width: 100%; height: 100%; flex-direction: column; overflow: hidden;">
+        <div>
+        <center>
+        <b>{}</b><br/>
+        Duration: {}<br/>
+        Length: {:0.1f}km<br/>
+        </center>
+        </div>
+        <iframe style="flex-grow: 1; border: none; margin: 0; padding: 0; " src="{}"></iframe>
+        </div>
+        </body>
+        </html>'''.format(
+            track.iloc[0].timestamp,
+            track_duration,
+            track.iloc[-1].distance/1000,
+            ".".join(output.split(".")[:-1]) + "-frame.html"
+            ))
+
 
 def plot_osm_hr_map(track, hr_file, output='hr-map.html', age=45, resting_rate=50, hr_plot_interval=30):
     # speeds will have already been adjusted since we side-effect the global record
@@ -150,7 +176,7 @@ def main():
 
     fitfile = fitparse.FitFile(args.input)
     if args.output is None:
-        args.output = f"{''.join(args.input.split('.')[:-1])}.html"
+        args.output = f"{'.'.join(args.input.split('.')[:-1])}.html"
 
     track = fitrecords_to_track(fitfile.get_messages('record'))
     plot_osm_map(track, args.output)
