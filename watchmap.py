@@ -15,9 +15,6 @@ import plotly.graph_objects as go
 from jinja2 import Template
 
 
-def speed_conversion(raw):
-    return 3.6*raw # convert m/s to km/h
-
 def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
 
