@@ -23,6 +23,9 @@ def plot_osm_map(track, output='speed-map.html', hr=None):
     norm = matplotlib.colors.Normalize(vmin=minima, vmax=maxima, clip=True)
     mapper = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
     m = folium.Map(location=[track.iloc[0]['position_lat'], track.iloc[0]['position_long']], zoom_start=15)
+    track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
+    folium.Marker([track.iloc[0]['position_lat'], track.iloc[0]['position_long']], tooltip=f"Start<br/>Time: {track.iloc[0].timestamp}",icon=folium.Icon(icon="home", color="green")).add_to(m)
+    folium.Marker([track.iloc[-1]['position_lat'], track.iloc[-1]['position_long']], tooltip=f"End<br/>Length: {track.iloc[-1].distance/1000:0.1f}km<br/>Duration: {track_duration}<br/>Time: {track.iloc[-1].timestamp}", icon=folium.Icon(icon="flag", color="red")).add_to(m)
     for _, pt in track.iterrows():
         if pt.speed == 0:
             pt.speed = 0.01
