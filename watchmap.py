@@ -170,7 +170,7 @@ def fitrecords_to_track(fitrecords):
 
 def main():
     parser = argparse.ArgumentParser(description="Plot Garmin Activity on a map")
-    parser.add_argument("-i", "--input", help="Input file", required=True, type=str)
+    parser.add_argument("-i", "--input", help="Input FIT file", required=True, type=str)
     parser.add_argument("-o", "--output", help="HTML output map file name (defaults to {input}.html)", type=str)
     args = parser.parse_args()
 
