@@ -137,7 +137,7 @@ def build_html(fitfile, output):
                 <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;"> 
                     <center>
                         <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
-                        Duration: {track_duration}<br/>
+                        Duration: {{ track_duration }}<br/>
                         Length: {{ ((session_info.total_distance / 10) | int) / 100 }}km<br/>
                         Average heart rate: {{ session_info.avg_heart_rate }}bpm<br/>
                         Average speed: {{ session_info.enhanced_avg_speed * 3.6 }}km/h<br/>
@@ -156,9 +156,7 @@ def build_html(fitfile, output):
 
     with open(output, "w") as f:
         f.write(tpl.render(**{
-                'start_time': track.iloc[0].timestamp,
                 'track_duration': track_duration,
-                'track_distance': track.iloc[-1].distance/1000,
                 'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;'),
                 'charts_iframe': chartsbuff.getvalue(),
                 'session_info': session_info,
