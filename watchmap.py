@@ -19,28 +19,23 @@ def speed_conversion(raw):
 def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
 
-def add_to_layer(mapper, layer, pt, varname, varmin, varmax):
+def add_to_layer(layer, pt, varname, minmax):
+    norm = matplotlib.colors.Normalize(vmin=minmax[varname]['min'], vmax=minmax[varname]['max'], clip=True)
+    mapper = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
     tooltip = f"Speed: {pt.speed:0.1f}kph<br/>Heart rate: {pt.heart_rate}bpm<br/>Altitude: {pt.enhanced_altitude:0.1f}m<br/>Time: {pt.timestamp}"
     folium.CircleMarker(
         location=(pt.position_lat, pt.position_long),
-        radius=10+1.5*normalize_value(varmin, varmax, pt[varname]),
+        radius=10+1.5*normalize_value(minmax[varname]['min'], minmax[varname]['max'], pt[varname]),
         tooltip=tooltip,
-        fill_color=matplotlib.colors.to_hex(mapper.to_rgba(normalize_value(varmin, varmax, pt[varname]), norm=False)),
+        fill_color=matplotlib.colors.to_hex(mapper.to_rgba(pt[varname])),
         fill=True,
         fill_opacity=0.2,
         weight=0,
     ).add_to(layer)
 
 def plot_osm_map(track, output):
-    minima = min(track['speed'])
-    maxima = max(track['speed'])
-    min_hr = min(track['heart_rate'])
-    max_hr = max(track['heart_rate'])
-    min_alt = min(track['enhanced_altitude'])
-    max_alt = max(track['enhanced_altitude'])
+    minmax = {colname: {'min': min(track[colname]), 'max': max(track[colname])} for colname in track.columns}
 
-    norm = matplotlib.colors.Normalize(vmin=minima, vmax=maxima, clip=True)
-    mapper = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
     m = folium.Map(location=[track['position_lat'].mean(), track['position_long'].mean()], zoom_start=15)
     track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
 
@@ -54,9 +49,9 @@ def plot_osm_map(track, output):
     for _, pt in track.iterrows():
         if pt.speed == 0:
             pt.speed = 0.01
-        add_to_layer(mapper, feat_group_speed, pt, 'speed', minima, maxima)
-        add_to_layer(mapper, feat_group_hr, pt, 'heart_rate', min_hr, max_hr)
-        add_to_layer(mapper, feat_group_alt, pt, 'enhanced_altitude', min_alt, max_alt)
+        add_to_layer(feat_group_speed, pt, 'speed', minmax)
+        add_to_layer(feat_group_hr, pt, 'heart_rate', minmax)
+        add_to_layer(feat_group_alt, pt, 'enhanced_altitude', minmax)
 
     m.add_child(feat_group_speed)
     m.add_child(feat_group_hr)
