@@ -11,6 +11,7 @@ import folium
 from folium.features import DivIcon
 from datetime import datetime, timedelta
 import io
+import plotly.graph_objects as go
 
 
 def speed_conversion(raw):
@@ -33,7 +34,8 @@ def add_to_layer(layer, pt, varname, minmax):
         weight=0,
     ).add_to(layer)
 
-def plot_osm_map(track, output):
+
+def plot_map(track):
     minmax = {colname: {'min': min(track[colname]), 'max': max(track[colname])} for colname in track.columns}
 
     m = folium.Map(location=[track['position_lat'].mean(), track['position_long'].mean()], zoom_start=15)
@@ -57,35 +59,95 @@ def plot_osm_map(track, output):
     m.add_child(feat_group_hr)
     m.add_child(feat_group_alt)
     m.add_child(folium.LayerControl())
-    iframebuf = io.BytesIO()
-    m.save(iframebuf, close_file=False)
+    mapbuff = io.BytesIO()
+    m.save(mapbuff, close_file=False)
+    return mapbuff
+
+def plot_charts(track):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=track['timestamp'],
+                y=track['enhanced_altitude'],
+                name='Altitude',
+                text="Altitude (m)",
+                hoverinfo='y+text',
+                marker_color='rgb(200, 155, 155)'
+                ))
+    fig.add_trace(go.Scatter(x=track['timestamp'],
+                y=track['heart_rate'],
+                name='Heart rate',
+                text="Heart rate (bpm)",
+                hoverinfo='y+text',
+                marker_color='rgb(255, 50, 50)'
+                ))
+    fig.add_trace(go.Scatter(x=track['timestamp'],
+                y=track['speed'],
+                name='Speed',
+                text="Speed (km/h)",
+                hoverinfo='y+text',
+                marker_color='rgb(0, 0, 109)'
+                ))
+    chartsbuff = io.StringIO()
+    fig.write_html(chartsbuff, full_html=False, default_height="700px")
+    return chartsbuff
+
+def build_html(track, output):
+    mapbuff = plot_map(track)
+    chartsbuff = plot_charts(track)
+    track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
 
     with open(output, "w") as f:
         f.write('''
-        <!DOCTYPE html>
-        <html style="width: 100%; height: 100%; margin: 0; padding: 0">
-        <head>
+<!DOCTYPE html>
+<html style="width: 100%; height: 100%; margin: 0; padding: 0">
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
         <meta charset="UTF-8">
-        </head>
-        <body style="width: 100%; height: 100%; margin: 0; padding: 0">
+    </head>
+    <body style="width: 100%; height: 100%; margin: 0; padding: 0">
         <div style="display: flex; width: 100%; height: 100%; flex-direction: column; overflow: hidden;">
-        <div>
-        <center>
-        <b>{}</b><br/>
-        Duration: {}<br/>
-        Length: {:0.1f}km<br/>
-        </center>
+            <div>
+                <center>
+                    <b>{start_time}</b><br/>
+                    Duration: {track_duration}<br/>
+                    Length: {track_distance:0.1f}km<br/>
+                </center>
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="mapplot-tab" data-bs-toggle="tab" data-bs-target="#mapplot" type="button" role="tab" aria-controls="mapplot" aria-selected="true">Map</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detail" type="button" role="tab" aria-controls="detail" aria-selected="false">Detail</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="false">Charts</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="tab-content" style="flex-grow: 1; border: none; margin: 0; padding: 0;">
+                <div class="tab-pane fade show active" id="mapplot" role="tabpanel" aria-labelledby="mapplot-tab" style="width: 100%; height: 100%;">
+                    <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{map_iframe}"></iframe>
+                </div>
+                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;"> 
+                    <center>
+                        <b>{start_time}</b><br/>
+                        Duration: {track_duration}<br/>
+                        Length: {track_distance:0.1f}km<br/>
+                    </center>
+                </div>
+                <div class="tab-pane fade show active" id="charts" role="tabpanel" aria-labelledby="charts-tab" style="width: 100%; height: 100%;">
+                    {charts_iframe}
+                </div>
+            </div>
         </div>
-        <iframe style="flex-grow: 1; border: none; margin: 0; padding: 0; " srcdoc="{}"></iframe>
-        </div>
-        </body>
-        </html>'''.format(
-            track.iloc[0].timestamp,
-            track_duration,
-            track.iloc[-1].distance/1000,
-            iframebuf.getvalue().decode('utf-8').replace('"', '&quot;')
-            ))
-
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</html>'''.format(**{
+            'start_time': track.iloc[0].timestamp,
+            'track_duration': track_duration,
+            'track_distance': track.iloc[-1].distance/1000,
+            'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;'),
+            'charts_iframe': chartsbuff.getvalue()
+        }))
 
 def fitrecords_to_track(fitrecords):
     track = []
@@ -111,7 +173,7 @@ def main():
         args.output = f"{'.'.join(args.input.split('.')[:-1])}.html"
 
     track = fitrecords_to_track(fitfile.get_messages('record'))
-    plot_osm_map(track, args.output)
+    build_html(track, args.output)
 
 if __name__ == "__main__":
     main()
