@@ -12,6 +12,7 @@ from folium.features import DivIcon
 from datetime import datetime, timedelta
 import io
 import plotly.graph_objects as go
+from jinja2 import Template
 
 
 def speed_conversion(raw):
@@ -34,6 +35,13 @@ def add_to_layer(layer, pt, varname, minmax):
         weight=0,
     ).add_to(layer)
 
+def get_session_details(fitfile):
+    session = list(fitfile.get_messages('session'))
+    if len(session) != 1:
+        raise Exception("Unsupported session type")
+    return {
+        d.name: d.value for d in session[0] if d.value is not None
+    }
 
 def plot_map(track):
     minmax = {colname: {'min': min(track[colname]), 'max': max(track[colname])} for colname in track.columns}
@@ -97,21 +105,21 @@ def build_html(fitfile, output):
     chartsbuff = plot_charts(track)
     track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
 
-    with open(output, "w") as f:
-        f.write('''
+    session_info = get_session_details(fitfile)
+
+    tpl = Template('''
 <!DOCTYPE html>
 <html style="width: 100%; height: 100%; margin: 0; padding: 0">
     <head>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
         <meta charset="UTF-8">
+        <title>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</title>
     </head>
     <body style="width: 100%; height: 100%; margin: 0; padding: 0">
         <div style="display: flex; width: 100%; height: 100%; flex-direction: column; overflow: hidden;">
             <div>
                 <center>
-                    <b>{start_time}</b><br/>
-                    Duration: {track_duration}<br/>
-                    Length: {track_distance:0.1f}km<br/>
+                    <h1>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</h1><br/>
                 </center>
                 <ul class="nav nav-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -127,29 +135,37 @@ def build_html(fitfile, output):
             </div>
             <div class="tab-content" style="flex-grow: 1; border: none; margin: 0; padding: 0;">
                 <div class="tab-pane fade show active" id="mapplot" role="tabpanel" aria-labelledby="mapplot-tab" style="width: 100%; height: 100%;">
-                    <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{map_iframe}"></iframe>
+                    <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
                 </div>
                 <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;"> 
                     <center>
-                        <b>{start_time}</b><br/>
+                        <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
                         Duration: {track_duration}<br/>
-                        Length: {track_distance:0.1f}km<br/>
+                        Length: {{ ((session_info.total_distance / 10) | int) / 100 }}km<br/>
+                        Average heart rate: {{ session_info.avg_heart_rate }}bpm<br/>
+                        Average speed: {{ session_info.enhanced_avg_speed * 3.6 }}km/h<br/>
+                        Top speed: {{ session_info.enhanced_max_speed * 3.6 }}km/h<br/>
+                        Total calories: {{ session_info.total_calories }}kcal<br/>
                     </center>
                 </div>
                 <div class="tab-pane fade show active" id="charts" role="tabpanel" aria-labelledby="charts-tab" style="width: 100%; height: 100%;">
-                    {charts_iframe}
+                    {{ charts_iframe }}
                 </div>
             </div>
         </div>
     </body>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-</html>'''.format(**{
-            'start_time': track.iloc[0].timestamp,
-            'track_duration': track_duration,
-            'track_distance': track.iloc[-1].distance/1000,
-            'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;'),
-            'charts_iframe': chartsbuff.getvalue()
-        }))
+</html>''')
+
+    with open(output, "w") as f:
+        f.write(tpl.render(**{
+                'start_time': track.iloc[0].timestamp,
+                'track_duration': track_duration,
+                'track_distance': track.iloc[-1].distance/1000,
+                'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;'),
+                'charts_iframe': chartsbuff.getvalue(),
+                'session_info': session_info,
+            }))
 
 def fitrecords_to_track(fitrecords):
     track = []
