@@ -152,8 +152,8 @@ def build_html(fitfile, output, map=True):
                         Duration: {{ track_duration }}<br/>
                         Length: {{ ((session_info.total_distance / 10) | int) / 100 }}km<br/>
                         Average heart rate: {{ session_info.avg_heart_rate }}bpm<br/>
-                        Average speed: {{ session_info.enhanced_avg_speed * 3.6 }}km/h<br/>
-                        Top speed: {{ session_info.enhanced_max_speed * 3.6 }}km/h<br/>
+                        Average speed: {{ ((session_info.enhanced_avg_speed * 3.6 * 100) | int) / 100 }}km/h<br/>
+                        Top speed: {{ ((session_info.enhanced_max_speed * 3.6  * 100) | int) / 100}}km/h<br/>
                         Total calories: {{ session_info.total_calories }}kcal<br/>
                     </center>
                 </div>
