@@ -70,21 +70,24 @@ def plot_map(track):
 
 def plot_charts(track):
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=track['timestamp'],
+    if 'enhanced_altitude' in track.columns:
+        fig.add_trace(go.Scatter(x=track['timestamp'],
                 y=track['enhanced_altitude'],
                 name='Altitude',
                 text="Altitude (m)",
                 hoverinfo='y+text',
                 marker_color='rgb(200, 155, 155)'
                 ))
-    fig.add_trace(go.Scatter(x=track['timestamp'],
+    if 'heart_rate' in track.columns:
+        fig.add_trace(go.Scatter(x=track['timestamp'],
                 y=track['heart_rate'],
                 name='Heart rate',
                 text="Heart rate (bpm)",
                 hoverinfo='y+text',
                 marker_color='rgb(255, 50, 50)'
                 ))
-    fig.add_trace(go.Scatter(x=track['timestamp'],
+    if 'speed' in track.columns:
+        fig.add_trace(go.Scatter(x=track['timestamp'],
                 y=track['speed'],
                 name='Speed',
                 text="Speed (km/h)",
@@ -95,10 +98,15 @@ def plot_charts(track):
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
 
-def build_html(fitfile, output):
+def build_html(fitfile, output, map=True):
     track = fitrecords_to_track(fitfile.get_messages('record'))
+    mapbuff = None
 
-    mapbuff = plot_map(track)
+    if 'position_long' not in track.columns:
+        map = False
+
+    if map:
+        mapbuff = plot_map(track)
     chartsbuff = plot_charts(track)
     track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
 
@@ -119,9 +127,11 @@ def build_html(fitfile, output):
                     <h1>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</h1><br/>
                 </center>
                 <ul class="nav nav-tabs" role="tablist">
+                    {% if map_iframe %}
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="mapplot-tab" data-bs-toggle="tab" data-bs-target="#mapplot" type="button" role="tab" aria-controls="mapplot" aria-selected="true">Map</button>
                     </li>
+                    {% endif %}
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detail" type="button" role="tab" aria-controls="detail" aria-selected="false">Detail</button>
                     </li>
@@ -131,9 +141,11 @@ def build_html(fitfile, output):
                 </ul>
             </div>
             <div class="tab-content" style="flex-grow: 1; border: none; margin: 0; padding: 0;">
+                {% if map_iframe %}
                 <div class="tab-pane fade show active" id="mapplot" role="tabpanel" aria-labelledby="mapplot-tab" style="width: 100%; height: 100%;">
                     <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
                 </div>
+                {% endif %}
                 <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;"> 
                     <center>
                         <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
@@ -157,7 +169,7 @@ def build_html(fitfile, output):
     with open(output, "w") as f:
         f.write(tpl.render(**{
                 'track_duration': track_duration,
-                'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;'),
+                'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;') if mapbuff else None,
                 'charts_iframe': chartsbuff.getvalue(),
                 'session_info': session_info,
             }))
@@ -170,9 +182,11 @@ def fitrecords_to_track(fitrecords):
         })
     df = pd.DataFrame(track)
     df['speed'] = df.enhanced_speed * 3.6
-    df['position_long'] = df['position_long'] * 180 / math.pow(2, 31)
-    df['position_lat'] = df['position_lat'] * 180 / math.pow(2, 31)
-    return df.dropna(subset=['position_long', 'position_lat'])
+    if 'position_long' in df.columns and 'position_lat' in df.columns:
+        df['position_long'] = df['position_long'] * 180 / math.pow(2, 31)
+        df['position_lat'] = df['position_lat'] * 180 / math.pow(2, 31)
+        return df.dropna(subset=['position_long', 'position_lat'])
+    return df
 
 
 def main():
