@@ -40,4 +40,10 @@ optional arguments:
                         HTML output map file name (defaults to {input}.html)
 ```
 
+## Docker
+
+To run watchmap through docker, use the `run_docker.sh` script:
+
+`./run_docker.sh $INPUTFILE.FIT $OUTPUT_DIRECTORY`
+
 [1]:docs/watchmap-01.png
