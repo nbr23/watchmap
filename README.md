@@ -40,5 +40,4 @@ optional arguments:
                         HTML output map file name (defaults to {input}.html)
 ```
 
-
 [1]:docs/watchmap-01.png
