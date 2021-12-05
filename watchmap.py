@@ -119,8 +119,8 @@ def plot_charts(track):
                 titlefont=dict(color=speed_color),
                 tickfont=dict(color=speed_color),
                 overlaying='y',
-                anchor='x',
-                side='right'
+                side='right',
+                anchor='x'
                 ))
     chartsbuff = io.StringIO()
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
