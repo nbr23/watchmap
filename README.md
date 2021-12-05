@@ -28,7 +28,7 @@ The FIT files describing your activities can be retrieved by mounting your Garmi
 Simply run the tool, providing the name of the input FIT file and output HTML map:
 
 ```
-usage: watchmap.py [-h] -i INPUT [-o OUTPUT]
+usage: watchmap.py [-h] -i INPUT -o OUTPUT_DIR
 
 Plot Garmin Activity on a map
 
@@ -36,8 +36,8 @@ optional arguments:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
                         Input FIT file
-  -o OUTPUT, --output OUTPUT
-                        HTML output map file name (defaults to {input}.html)
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        Output directory (output will be written in output_dir/{input}.html)
 ```
 
 ## Docker
