@@ -70,29 +70,57 @@ def plot_map(track):
 
 def plot_charts(track):
     fig = go.Figure()
+    fig.update_layout(xaxis=dict(domain=[0.05,1.0]))
     if 'enhanced_altitude' in track.columns:
+        altitude_color='rgb(200, 155, 155)'
         fig.add_trace(go.Scatter(x=track['timestamp'],
                 y=track['enhanced_altitude'],
                 name='Altitude',
                 text="Altitude (m)",
                 hoverinfo='y+text',
-                marker_color='rgb(200, 155, 155)'
+                marker_color=altitude_color,
+                ))
+        fig.update_layout(yaxis1=dict(
+                title='Altitude',
+                titlefont=dict(color=altitude_color),
+                tickfont=dict(color=altitude_color)
                 ))
     if 'heart_rate' in track.columns:
+        heart_rate_color='rgb(255, 50, 50)'
         fig.add_trace(go.Scatter(x=track['timestamp'],
                 y=track['heart_rate'],
                 name='Heart rate',
                 text="Heart rate (bpm)",
                 hoverinfo='y+text',
-                marker_color='rgb(255, 50, 50)'
+                marker_color=heart_rate_color,
+                yaxis='y2'
+                ))
+        fig.update_layout(yaxis2=dict(
+                title='Heart Rate',
+                titlefont=dict(color=heart_rate_color),
+                tickfont=dict(color=heart_rate_color),
+                overlaying='y',
+                side='left',
+                anchor='free',
+                position=0.0
                 ))
     if 'speed' in track.columns:
+        speed_color='rgb(0, 0, 109)'
         fig.add_trace(go.Scatter(x=track['timestamp'],
                 y=track['speed'],
                 name='Speed',
                 text="Speed (km/h)",
                 hoverinfo='y+text',
-                marker_color='rgb(0, 0, 109)'
+                marker_color=speed_color,
+                yaxis='y3'
+                ))
+        fig.update_layout(yaxis3=dict(
+                title='Speed',
+                titlefont=dict(color=speed_color),
+                tickfont=dict(color=speed_color),
+                overlaying='y',
+                anchor='x',
+                side='right'
                 ))
     chartsbuff = io.StringIO()
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
@@ -146,7 +174,7 @@ def build_html(fitfile, output, map=True):
                     <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
                 </div>
                 {% endif %}
-                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;"> 
+                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
                     <center>
                         <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
                         Duration: {{ track_duration }}<br/>
