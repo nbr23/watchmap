@@ -15,6 +15,25 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from jinja2 import Template
 
+# Metrics to be included in the Charts tab of the output HTML
+AVAILABLE_METRICS = ['enhanced_altitude','heart_rate','speed']
+METRIC_NAMES = {
+        'enhanced_altitude':'Altitude',
+        'heart_rate':'Heart rate',
+        'speed':'Speed'
+        }
+METRIC_UNITS = {
+        'enhanced_altitude':'m',
+        'heart_rate':'bpm',
+        'speed':'km/h'
+        }
+METRIC_COLORS = {
+        'enhanced_altitude':'rgb(200, 155, 155)',
+        'heart_rate':'rgb(255, 50, 50)',
+        'speed':'rgb(0, 0, 109)'
+        }
+
+HTML_TEMPLATE_FNAME = 'template.html'
 
 def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
@@ -70,54 +89,30 @@ def plot_map(track):
     return mapbuff
 
 def plot_charts(track):
-    # calculate how many rows will be needed
-    nb_rows = len(
-            {'enhanced_altitude','heart_rate','speed'}.intersection(
-                    set(track.columns)))
+    metrics = sorted(list(
+            set(AVAILABLE_METRICS).intersection(set(track.columns))
+            ))
+    nb_rows = len(metrics)
     fig = make_subplots(rows=nb_rows,cols=1)
     current_row = 1
-    if 'enhanced_altitude' in track.columns:
+
+    for metric in metrics:
         fig.add_trace(
             go.Scatter(
                 x=track['timestamp'],
-                y=track['enhanced_altitude'],
-                name='Altitude',
-                text="Altitude (m)",
+                y=track[metric],
+                name=METRIC_NAMES[metric],
+                text="{name} ({unit})".format(
+                        name=METRIC_NAMES[metric],
+                        unit=METRIC_UNITS[metric]
+                        ),
                 hoverinfo='y+text',
-                marker_color='rgb(200, 155, 155)'
+                marker_color=METRIC_COLORS[metric]
                 ),
             row=current_row,
             col=1
             )
         current_row += 1
-    if 'heart_rate' in track.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=track['timestamp'],
-                y=track['heart_rate'],
-                name='Heart rate',
-                text="Heart rate (bpm)",
-                hoverinfo='y+text',
-                marker_color='rgb(255, 50, 50)'
-                ),
-            row=current_row,
-            col=1
-            )
-        current_row += 1
-    if 'speed' in track.columns:
-        fig.add_trace(
-            go.Scatter(
-                x=track['timestamp'],
-                y=track['speed'],
-                name='Speed',
-                text="Speed (km/h)",
-                hoverinfo='y+text',
-                marker_color='rgb(0, 0, 109)'
-                ),
-            row=current_row,
-            col=1
-            )
-        current_row+=1
     chartsbuff = io.StringIO()
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
@@ -136,59 +131,8 @@ def build_html(fitfile, output, map=True):
 
     session_info = get_session_details(fitfile)
 
-    tpl = Template('''
-<!DOCTYPE html>
-<html style="width: 100%; height: 100%; margin: 0; padding: 0">
-    <head>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-        <meta charset="UTF-8">
-        <title>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</title>
-    </head>
-    <body style="width: 100%; height: 100%; margin: 0; padding: 0">
-        <div style="display: flex; width: 100%; height: 100%; flex-direction: column; overflow: hidden;">
-            <div>
-                <center>
-                    <h1>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</h1><br/>
-                </center>
-                <ul class="nav nav-tabs" role="tablist">
-                    {% if map_iframe %}
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="mapplot-tab" data-bs-toggle="tab" data-bs-target="#mapplot" type="button" role="tab" aria-controls="mapplot" aria-selected="true">Map</button>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detail" type="button" role="tab" aria-controls="detail" aria-selected="false">Detail</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="false">Charts</button>
-                    </li>
-                </ul>
-            </div>
-            <div class="tab-content" style="flex-grow: 1; border: none; margin: 0; padding: 0;">
-                {% if map_iframe %}
-                <div class="tab-pane fade show active" id="mapplot" role="tabpanel" aria-labelledby="mapplot-tab" style="width: 100%; height: 100%;">
-                    <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
-                </div>
-                {% endif %}
-                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
-                    <center>
-                        <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
-                        Duration: {{ track_duration }}<br/>
-                        Length: {{ ((session_info.total_distance / 10) | int) / 100 }}km<br/>
-                        Average heart rate: {{ session_info.avg_heart_rate }}bpm<br/>
-                        Average speed: {{ ((session_info.enhanced_avg_speed * 3.6 * 100) | int) / 100 }}km/h<br/>
-                        Top speed: {{ ((session_info.enhanced_max_speed * 3.6  * 100) | int) / 100}}km/h<br/>
-                        Total calories: {{ session_info.total_calories }}kcal<br/>
-                    </center>
-                </div>
-                <div class="tab-pane fade show active" id="charts" role="tabpanel" aria-labelledby="charts-tab" style="width: 100%; height: 100%;">
-                    {{ charts_iframe }}
-                </div>
-            </div>
-        </div>
-    </body>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-</html>''')
+    with open(HTML_TEMPLATE_FNAME, 'r') as html_template:
+        tpl = Template(html_template.read())
 
     with open(output, "w") as f:
         f.write(tpl.render(**{
