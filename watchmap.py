@@ -12,6 +12,7 @@ from folium.features import DivIcon
 from datetime import datetime, timedelta
 import io
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from jinja2 import Template
 
 
@@ -69,31 +70,54 @@ def plot_map(track):
     return mapbuff
 
 def plot_charts(track):
-    fig = go.Figure()
+    # calculate how many rows will be needed
+    nb_rows = len(
+            {'enhanced_altitude','heart_rate','speed'}.intersection(
+                    set(track.columns)))
+    fig = make_subplots(rows=nb_rows,cols=1)
+    current_row = 1
     if 'enhanced_altitude' in track.columns:
-        fig.add_trace(go.Scatter(x=track['timestamp'],
+        fig.add_trace(
+            go.Scatter(
+                x=track['timestamp'],
                 y=track['enhanced_altitude'],
                 name='Altitude',
                 text="Altitude (m)",
                 hoverinfo='y+text',
                 marker_color='rgb(200, 155, 155)'
-                ))
+                ),
+            row=current_row,
+            col=1
+            )
+        current_row += 1
     if 'heart_rate' in track.columns:
-        fig.add_trace(go.Scatter(x=track['timestamp'],
+        fig.add_trace(
+            go.Scatter(
+                x=track['timestamp'],
                 y=track['heart_rate'],
                 name='Heart rate',
                 text="Heart rate (bpm)",
                 hoverinfo='y+text',
                 marker_color='rgb(255, 50, 50)'
-                ))
+                ),
+            row=current_row,
+            col=1
+            )
+        current_row += 1
     if 'speed' in track.columns:
-        fig.add_trace(go.Scatter(x=track['timestamp'],
+        fig.add_trace(
+            go.Scatter(
+                x=track['timestamp'],
                 y=track['speed'],
                 name='Speed',
                 text="Speed (km/h)",
                 hoverinfo='y+text',
                 marker_color='rgb(0, 0, 109)'
-                ))
+                ),
+            row=current_row,
+            col=1
+            )
+        current_row+=1
     chartsbuff = io.StringIO()
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
@@ -146,7 +170,7 @@ def build_html(fitfile, output, map=True):
                     <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
                 </div>
                 {% endif %}
-                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;"> 
+                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
                     <center>
                         <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
                         Duration: {{ track_duration }}<br/>
