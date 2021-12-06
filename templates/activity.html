@@ -18,7 +18,7 @@
                     </li>
                     {% endif %}
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detail" type="button" role="tab" aria-controls="detail" aria-selected="false">Detail</button>
+                        <button class="nav-link{% if not map_iframe %} active{% endif %}" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detail" type="button" role="tab" aria-controls="detail" aria-selected="false">Detail</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="false">Charts</button>
@@ -31,7 +31,7 @@
                     <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
                 </div>
                 {% endif %}
-                <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
+                <div class="tab-pane fade show active" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
                     <center>
                         <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
                         Duration: {{ track_duration }}<br/>

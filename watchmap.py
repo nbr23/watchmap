@@ -108,7 +108,7 @@ def plot_map(track):
 
 
 def plot_charts(track):
-    metrics = sorted(list(set(AVAILABLE_METRICS.keys()).intersection(set(track.columns))))
+    metrics = sorted(list(set(AVAILABLE_METRICS).intersection(set(track.columns))))
     nb_rows = len(metrics)
     fig = make_subplots(rows=nb_rows, cols=1)
     current_row = 1
@@ -119,9 +119,7 @@ def plot_charts(track):
                 x=track["timestamp"],
                 y=track[metric],
                 name=AVAILABLE_METRICS[metric]["pretty_name"],
-                text="{name} ({unit})".format(
-                    name=AVAILABLE_METRICS[metric]["pretty_name"], unit=AVAILABLE_METRICS[metric]["unit"]
-                ),
+                text="{pretty_name} ({unit})".format(**AVAILABLE_METRICS[metric]),
                 hoverinfo="y+text",
                 marker_color=AVAILABLE_METRICS[metric]["color"],
             ),
