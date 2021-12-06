@@ -15,36 +15,40 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from jinja2 import Template
 
-# Metrics to be included in the Charts tab of the output HTML
-AVAILABLE_METRICS = ['enhanced_altitude','heart_rate','speed']
-METRIC_NAMES = {
-        'enhanced_altitude':'Altitude',
-        'heart_rate':'Heart rate',
-        'speed':'Speed'
-        }
-METRIC_UNITS = {
-        'enhanced_altitude':'m',
-        'heart_rate':'bpm',
-        'speed':'km/h'
-        }
-METRIC_COLORS = {
-        'enhanced_altitude':'rgb(200, 155, 155)',
-        'heart_rate':'rgb(255, 50, 50)',
-        'speed':'rgb(0, 0, 109)'
-        }
+AVAILABLE_METRICS = {
+    "enhanced_altitude": {
+        "color": "rgb(200, 155, 155)",
+        "pretty_name": "Altitude",
+        "unit": "m"
+    },
+    "heart_rate": {
+        "color": "rgb(255, 50, 50)",
+        "pretty_name": "Heart rate",
+        "unit": "bpm"
+    },
+    "speed": {
+        "color": "rgb(0, 0, 109)",
+        "pretty_name": "Speed",
+        "unit": "km/h"
+    }
+}
 
-HTML_TEMPLATE_FNAME = 'template.html'
+HTML_TEMPLATE_FNAME = "templates/activity.html"
+
 
 def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
 
+
 def add_to_layer(layer, pt, varname, minmax):
-    norm = matplotlib.colors.Normalize(vmin=minmax[varname]['min'], vmax=minmax[varname]['max'], clip=True)
+    norm = matplotlib.colors.Normalize(
+        vmin=minmax[varname]["min"], vmax=minmax[varname]["max"], clip=True
+    )
     mapper = cm.ScalarMappable(norm=norm, cmap=cm.plasma)
     tooltip = f"Speed: {pt.speed:0.1f}kph<br/>Heart rate: {pt.heart_rate}bpm<br/>Altitude: {pt.enhanced_altitude:0.1f}m<br/>Time: {pt.timestamp}"
     folium.CircleMarker(
         location=(pt.position_lat, pt.position_long),
-        radius=10+1.5*normalize_value(minmax[varname]['min'], minmax[varname]['max'], pt[varname]),
+        radius=10 + 1.5 * normalize_value(minmax[varname]["min"], minmax[varname]["max"], pt[varname]),
         tooltip=tooltip,
         fill_color=matplotlib.colors.to_hex(mapper.to_rgba(pt[varname])),
         fill=True,
@@ -52,33 +56,47 @@ def add_to_layer(layer, pt, varname, minmax):
         weight=0,
     ).add_to(layer)
 
+
 def get_session_details(fitfile):
-    session = list(fitfile.get_messages('session'))
+    session = list(fitfile.get_messages("session"))
     if len(session) != 1:
         raise Exception("Unsupported session type")
-    return {
-        d.name: d.value for d in session[0] if d.value is not None
-    }
+    return {d.name: d.value for d in session[0] if d.value is not None}
+
 
 def plot_map(track):
-    minmax = {colname: {'min': min(track[colname]), 'max': max(track[colname])} for colname in track.columns}
+    minmax = {
+        colname: {"min": min(track[colname]), "max": max(track[colname])}
+        for colname in track.columns
+    }
 
-    m = folium.Map(location=[track['position_lat'].mean(), track['position_long'].mean()], zoom_start=15)
+    m = folium.Map(
+        location=[track["position_lat"].mean(), track["position_long"].mean()],
+        zoom_start=15,
+    )
     track_duration = track.iloc[-1].timestamp - track.iloc[0].timestamp
 
-    feat_group_speed = folium.FeatureGroup(name='Speed')
-    feat_group_hr = folium.FeatureGroup(name='Heart Rate', show=False)
-    feat_group_alt = folium.FeatureGroup(name='Altitude', show=False)
+    feat_group_speed = folium.FeatureGroup(name="Speed")
+    feat_group_hr = folium.FeatureGroup(name="Heart Rate", show=False)
+    feat_group_alt = folium.FeatureGroup(name="Altitude", show=False)
 
-    folium.Marker([track.iloc[0]['position_lat'], track.iloc[0]['position_long']], tooltip=f"Start<br/>Time: {track.iloc[0].timestamp}",icon=folium.Icon(icon="home", color="green")).add_to(m)
-    folium.Marker([track.iloc[-1]['position_lat'], track.iloc[-1]['position_long']], tooltip=f"End<br/>Length: {track.iloc[-1].distance/1000:0.1f}km<br/>Duration: {track_duration}<br/>Time: {track.iloc[-1].timestamp}", icon=folium.Icon(icon="flag", color="red")).add_to(m)
+    folium.Marker(
+        [track.iloc[0]["position_lat"], track.iloc[0]["position_long"]],
+        tooltip=f"Start<br/>Time: {track.iloc[0].timestamp}",
+        icon=folium.Icon(icon="home", color="green"),
+    ).add_to(m)
+    folium.Marker(
+        [track.iloc[-1]["position_lat"], track.iloc[-1]["position_long"]],
+        tooltip=f"End<br/>Length: {track.iloc[-1].distance/1000:0.1f}km<br/>Duration: {track_duration}<br/>Time: {track.iloc[-1].timestamp}",
+        icon=folium.Icon(icon="flag", color="red"),
+    ).add_to(m)
 
     for _, pt in track.iterrows():
         if pt.speed == 0:
             pt.speed = 0.01
-        add_to_layer(feat_group_speed, pt, 'speed', minmax)
-        add_to_layer(feat_group_hr, pt, 'heart_rate', minmax)
-        add_to_layer(feat_group_alt, pt, 'enhanced_altitude', minmax)
+        add_to_layer(feat_group_speed, pt, "speed", minmax)
+        add_to_layer(feat_group_hr, pt, "heart_rate", minmax)
+        add_to_layer(feat_group_alt, pt, "enhanced_altitude", minmax)
 
     m.add_child(feat_group_speed)
     m.add_child(feat_group_hr)
@@ -88,40 +106,39 @@ def plot_map(track):
     m.save(mapbuff, close_file=False)
     return mapbuff
 
+
 def plot_charts(track):
-    metrics = sorted(list(
-            set(AVAILABLE_METRICS).intersection(set(track.columns))
-            ))
+    metrics = sorted(list(set(AVAILABLE_METRICS.keys()).intersection(set(track.columns))))
     nb_rows = len(metrics)
-    fig = make_subplots(rows=nb_rows,cols=1)
+    fig = make_subplots(rows=nb_rows, cols=1)
     current_row = 1
 
     for metric in metrics:
         fig.add_trace(
             go.Scatter(
-                x=track['timestamp'],
+                x=track["timestamp"],
                 y=track[metric],
-                name=METRIC_NAMES[metric],
+                name=AVAILABLE_METRICS[metric]["pretty_name"],
                 text="{name} ({unit})".format(
-                        name=METRIC_NAMES[metric],
-                        unit=METRIC_UNITS[metric]
-                        ),
-                hoverinfo='y+text',
-                marker_color=METRIC_COLORS[metric]
+                    name=AVAILABLE_METRICS[metric]["pretty_name"], unit=AVAILABLE_METRICS[metric]["unit"]
                 ),
+                hoverinfo="y+text",
+                marker_color=AVAILABLE_METRICS[metric]["color"],
+            ),
             row=current_row,
-            col=1
-            )
+            col=1,
+        )
         current_row += 1
     chartsbuff = io.StringIO()
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
 
+
 def build_html(fitfile, output, map=True):
-    track = fitrecords_to_track(fitfile.get_messages('record'))
+    track = fitrecords_to_track(fitfile.get_messages("record"))
     mapbuff = None
 
-    if 'position_long' not in track.columns:
+    if "position_long" not in track.columns:
         map = False
 
     if map:
@@ -131,43 +148,59 @@ def build_html(fitfile, output, map=True):
 
     session_info = get_session_details(fitfile)
 
-    with open(HTML_TEMPLATE_FNAME, 'r') as html_template:
+    with open(HTML_TEMPLATE_FNAME, "r") as html_template:
         tpl = Template(html_template.read())
 
     with open(output, "w") as f:
-        f.write(tpl.render(**{
-                'track_duration': track_duration,
-                'map_iframe': mapbuff.getvalue().decode('utf-8').replace('"', '&quot;') if mapbuff else None,
-                'charts_iframe': chartsbuff.getvalue(),
-                'session_info': session_info,
-            }))
+        f.write(
+            tpl.render(
+                **{
+                    "track_duration": track_duration,
+                    "map_iframe": mapbuff.getvalue()
+                    .decode("utf-8")
+                    .replace('"', "&quot;")
+                    if mapbuff
+                    else None,
+                    "charts_iframe": chartsbuff.getvalue(),
+                    "session_info": session_info,
+                }
+            )
+        )
+
 
 def fitrecords_to_track(fitrecords):
     track = []
     for record in fitrecords:
-        track.append({
-            d.name: d.value for d in record
-        })
+        track.append({d.name: d.value for d in record})
     df = pd.DataFrame(track)
-    df['speed'] = df.enhanced_speed * 3.6
-    if 'position_long' in df.columns and 'position_lat' in df.columns:
-        df['position_long'] = df['position_long'] * 180 / math.pow(2, 31)
-        df['position_lat'] = df['position_lat'] * 180 / math.pow(2, 31)
-        return df.dropna(subset=['position_long', 'position_lat'])
+    df["speed"] = df.enhanced_speed * 3.6
+    if "position_long" in df.columns and "position_lat" in df.columns:
+        df["position_long"] = df["position_long"] * 180 / math.pow(2, 31)
+        df["position_lat"] = df["position_lat"] * 180 / math.pow(2, 31)
+        return df.dropna(subset=["position_long", "position_lat"])
     return df
 
 
 def main():
     parser = argparse.ArgumentParser(description="Plot Garmin Activity on a map")
     parser.add_argument("-i", "--input", help="Input FIT file", required=True, type=str)
-    parser.add_argument("-o", "--output_dir", help="Output directory (output will be written in output_dir/{input}.html)", type=str, required=True)
+    parser.add_argument(
+        "-o",
+        "--output_dir",
+        help="Output directory (output will be written in output_dir/{input}.html)",
+        type=str,
+        required=True,
+    )
     args = parser.parse_args()
 
     fitfile = fitparse.FitFile(args.input)
 
-    output = f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
+    output = (
+        f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
+    )
 
     build_html(fitfile, output)
+
 
 if __name__ == "__main__":
     main()
