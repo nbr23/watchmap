@@ -164,6 +164,7 @@ def build_html(fitfile, output, map=True):
                 }
             )
         )
+        print("Output written to %s" % output)
 
 
 def fitrecords_to_track(fitrecords):

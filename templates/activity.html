@@ -13,7 +13,7 @@
                 </center>
                 <ul class="nav nav-tabs" role="tablist">
                     {% if map_iframe %}
-                    <li class="nav-item" role="presentation">
+                    <li class="nav-item active" role="presentation">
                         <button class="nav-link active" id="mapplot-tab" data-bs-toggle="tab" data-bs-target="#mapplot" type="button" role="tab" aria-controls="mapplot" aria-selected="true">Map</button>
                     </li>
                     {% endif %}
@@ -31,7 +31,7 @@
                     <iframe id="mapplot" style="width: 100%; height: 100%;" srcdoc="{{ map_iframe }}"></iframe>
                 </div>
                 {% endif %}
-                <div class="tab-pane fade show active" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
+                <div class="tab-pane fade show" id="detail" role="tabpanel" aria-labelledby="detail-tab" style="width: 100%; height: 100%;">
                     <center>
                         <b>{{ session_info.get('sport', '').capitalize() }} - {{ session_info.start_time }}</b><br/>
                         Duration: {{ track_duration }}<br/>
