@@ -7,6 +7,10 @@ Plots Activities (run, walk, swim, etc) from a Garmin device's FIT file on OpenS
 
 ![screenshot][1]
 
+![screenshot][2]
+
+![screenshot][3]
+
 ## Supported devices
 
 Tested with FIT files extracted from a Garmin Forerunner 245
@@ -47,3 +51,5 @@ To run watchmap through docker, use the `run_docker.sh` script:
 `./run_docker.sh $INPUTFILE.FIT $OUTPUT_DIRECTORY`
 
 [1]:docs/watchmap-01.png
+[2]:docs/watchmap-02.png
+[3]:docs/watchmap-03.png
