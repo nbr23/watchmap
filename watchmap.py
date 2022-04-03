@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
-from os.path import exists
+import os.path
 import argparse
 import fitparse
 import pandas as pd
@@ -15,6 +15,7 @@ import io
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from jinja2 import Template
+import base64
 
 AVAILABLE_METRICS = {
     "enhanced_altitude": {
@@ -136,9 +137,15 @@ def plot_charts(track):
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
 
-def build_html(fitfile, output, map=True):
+def build_html(input_path, output, map=True, embed_fit=False):
+    fitfile = fitparse.FitFile(input_path)
     track = fitrecords_to_track(fitfile.get_messages("record"))
     mapbuff = None
+    b64fit = None
+
+    if embed_fit:
+        with open(input_path, "rb") as input_file:
+            b64fit = os.path.basename(input_path), base64.b64encode(input_file.read()).decode('utf-8')
 
     if "position_long" not in track.columns:
         log("No GPS coordinates found in the FIT file, not plotting the map")
@@ -166,6 +173,7 @@ def build_html(fitfile, output, map=True):
                     else None,
                     "charts_iframe": chartsbuff.getvalue(),
                     "session_info": session_info,
+                    "fit_file": b64fit,
                 }
             )
         )
@@ -198,20 +206,19 @@ def main():
     )
     parser.add_argument("-v", "--verbose", action='store_true')
     parser.add_argument("-f", "--force", help="Overwrite output file if it exists", action='store_true')
+    parser.add_argument("--embed-fit", dest="embed_fit", help="Embed FIT file into the generated HTML page", action='store_true')
     args = parser.parse_args()
     VERBOSE = args.verbose
-
-    fitfile = fitparse.FitFile(args.input)
 
     output = (
         f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
     )
 
-    if exists(output) and not args.force:
+    if os.path.exists(output) and not args.force:
         print(f"Output file '{output}' already exists, skipping.")
         return
 
-    build_html(fitfile, output)
+    build_html(args.input, output, embed_fit=args.embed_fit)
 
 
 if __name__ == "__main__":
