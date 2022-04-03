@@ -72,7 +72,7 @@ def get_session_details(fitfile):
 def plot_map(track):
     minmax = {
         colname: {"min": min(track[colname]), "max": max(track[colname])}
-        for colname in track.columns
+        for colname in track.columns if len(track[colname].dropna())
     }
 
     m = folium.Map(
