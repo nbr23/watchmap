@@ -35,7 +35,11 @@ AVAILABLE_METRICS = {
 }
 
 HTML_TEMPLATE_FNAME = "templates/activity.html"
+VERBOSE = False
 
+def log(msg):
+    if VERBOSE:
+        print(msg)
 
 def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
@@ -132,12 +136,12 @@ def plot_charts(track):
     fig.write_html(chartsbuff, full_html=False, default_height="700px")
     return chartsbuff
 
-
 def build_html(fitfile, output, map=True):
     track = fitrecords_to_track(fitfile.get_messages("record"))
     mapbuff = None
 
     if "position_long" not in track.columns:
+        log("No GPS coordinates found in the FIT file, not plotting the map")
         map = False
 
     if map:
@@ -182,6 +186,7 @@ def fitrecords_to_track(fitrecords):
 
 
 def main():
+    global VERBOSE
     parser = argparse.ArgumentParser(description="Plot Garmin Activity on a map")
     parser.add_argument("-i", "--input", help="Input FIT file", required=True, type=str)
     parser.add_argument(
@@ -191,7 +196,10 @@ def main():
         type=str,
         required=True,
     )
+    parser.add_argument("-v", "--verbose", action='store_true')
+    parser.add_argument("-f", "--force", help="Overwrite output file if it exists", action='store_true')
     args = parser.parse_args()
+    VERBOSE = args.verbose
 
     fitfile = fitparse.FitFile(args.input)
 
@@ -199,7 +207,7 @@ def main():
         f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
     )
 
-    if exists(output):
+    if exists(output) and not args.force:
         print(f"Output file '{output}' already exists, skipping.")
         return
 
