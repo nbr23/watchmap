@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
+from os.path import exists
 import argparse
 import fitparse
 import pandas as pd
@@ -198,8 +199,12 @@ def main():
         f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
     )
 
+    if exists(output):
+        print(f"Output file '{output}' already exists, skipping.")
+        return
+
     build_html(fitfile, output)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
