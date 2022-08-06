@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "watchmap"
+version = "1.0.0"
+description = "Plots Activities (run, walk, swim, etc) from a Garmin device"
+license = "GPL3"
+authors = ["nbr23 <max@23.tf>", "bunnie <bunnie@kosagi.com>"]
+
+packages = [
+    { include = "watchmap" }
+]
+
+[tool.poetry.scripts]
+watchmap = 'watchmap:run'
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^1.4.3"
+matplotlib = "^3.5.2"
+folium = "^0.12.1"
+fitparse = "^1.2.0"
+plotly = "^5.9.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

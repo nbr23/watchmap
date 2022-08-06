@@ -19,9 +19,9 @@ Tested with FIT files extracted from a Garmin Forerunner 245
 
 Works with python 3.9 and above.
 
-Install python dependencies:
+## Install
 
-`pip install -r requirements.txt`
+`pip install poetry && poetry install`
 
 ## Retrieving FIT files
 
