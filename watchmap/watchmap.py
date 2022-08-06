@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import sys
 import os.path
 import argparse
 import fitparse
@@ -193,7 +192,7 @@ def fitrecords_to_track(fitrecords):
     return df
 
 
-def main():
+def run():
     global VERBOSE
     parser = argparse.ArgumentParser(description="Plot Garmin Activity on a map")
     parser.add_argument("-i", "--input", help="Input FIT file", required=True, type=str)
@@ -220,6 +219,3 @@ def main():
 
     build_html(args.input, output, embed_fit=args.embed_fit)
 
-
-if __name__ == "__main__":
-    sys.exit(main())

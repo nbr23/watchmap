@@ -32,7 +32,7 @@ The FIT files describing your activities can be retrieved by mounting your Garmi
 Simply run the tool, providing the name of the input FIT file and output HTML map:
 
 ```
-usage: watchmap.py [-h] -i INPUT -o OUTPUT_DIR
+usage: watchmap [-h] -i INPUT -o OUTPUT_DIR
 
 Plot Garmin Activity on a map
 
