@@ -157,7 +157,7 @@ def build_html(input_path, output, map=True, embed_fit=False):
 
     session_info = get_session_details(fitfile)
 
-    with open(HTML_TEMPLATE_FNAME, "r") as html_template:
+    with open(os.path.join(os.path.dirname(__file__), HTML_TEMPLATE_FNAME), "r") as html_template:
         tpl = Template(html_template.read())
 
     with open(output, "w") as f:
