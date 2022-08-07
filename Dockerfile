@@ -1,12 +1,18 @@
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-buster as builder
 
 WORKDIR /usr/src/app
 
-COPY ./requirements.txt /usr/src/app/requirements.txt
+RUN pip install poetry
 
-RUN pip3 install --no-cache-dir -r /usr/src/app/requirements.txt
+COPY ./watchmap /usr/src/app/watchmap
+COPY ./pyproject.toml /usr/src/app/
 
-COPY ./watchmap.py /usr/src/app/
-RUN ln -s /usr/src/app/watchmap.py /usr/bin/watchmap
+RUN poetry build
+
+FROM python:3.10-slim-buster
+
+COPY --from=builder /usr/src/app/dist/watchmap* /usr/src/app/
+
+RUN pip install /usr/src/app/watchmap*.tar.gz && rm /usr/src/app/watchmap*.tar.gz
 
 CMD ["watchmap"]
