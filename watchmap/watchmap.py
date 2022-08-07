@@ -183,7 +183,8 @@ def fitrecords_to_track(fitrecords):
     for record in fitrecords:
         track.append({d.name: d.value for d in record})
     df = pd.DataFrame(track)
-    df["speed"] = df.enhanced_speed * 3.6
+    if 'enhanced_speed' in df.columns:
+        df["speed"] = df.enhanced_speed * 3.6
     if "position_long" in df.columns and "position_lat" in df.columns:
         df["position_long"] = df["position_long"] * 180 / math.pow(2, 31)
         df["position_lat"] = df["position_lat"] * 180 / math.pow(2, 31)

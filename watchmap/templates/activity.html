@@ -37,8 +37,12 @@
                         Duration: {{ track_duration }}<br/>
                         Length: {{ ((session_info.total_distance / 10) | int) / 100 }}km<br/>
                         Average heart rate: {{ session_info.avg_heart_rate }}bpm<br/>
+                        {% if 'enhanced_avg_speed' in session_info %}
                         Average speed: {{ ((session_info.enhanced_avg_speed * 3.6 * 100) | int) / 100 }}km/h<br/>
+                        {% endif %}
+                        {% if 'enhanced_max_speed' in session_info %}
                         Top speed: {{ ((session_info.enhanced_max_speed * 3.6  * 100) | int) / 100}}km/h<br/>
+                        {% endif %}
                         Total calories: {{ session_info.total_calories }}kcal<br/>
                     </center>
                     <div style="position: absolute; bottom: 0; right: 50%; transform: translateX(50%)">Activity report generated with <a target="_blank" href="https://github.com/nbr23/watchmap">watchmap</a>{% if fit_file %} - <a download="{{ fit_file[0] }}" href="data:binary;base64,{{ fit_file[1] }}">Download source FIT file</a>{% endif %}</div>
