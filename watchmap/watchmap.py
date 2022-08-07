@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from jinja2 import Template
 import base64
+import logging
 
 AVAILABLE_METRICS = {
     "enhanced_altitude": {
@@ -35,11 +36,9 @@ AVAILABLE_METRICS = {
 }
 
 HTML_TEMPLATE_FNAME = "templates/activity.html"
-VERBOSE = False
 
-def log(msg):
-    if VERBOSE:
-        print(msg)
+logger = logging.getLogger("watchmap")
+logger.addHandler(logging.StreamHandler())
 
 def normalize_value(varmin, varmax, value):
     return float(varmax - value) / float(varmax - varmin)
@@ -147,7 +146,7 @@ def build_html(input_path, output, map=True, embed_fit=False):
             b64fit = os.path.basename(input_path), base64.b64encode(input_file.read()).decode('utf-8')
 
     if "position_long" not in track.columns:
-        log("No GPS coordinates found in the FIT file, not plotting the map")
+        logger.warn("No GPS coordinates found in the FIT file, not plotting the map")
         map = False
 
     if map:
@@ -176,7 +175,7 @@ def build_html(input_path, output, map=True, embed_fit=False):
                 }
             )
         )
-        print("Output written to %s" % output)
+        logger.info("Output written to %s" % output)
 
 
 def fitrecords_to_track(fitrecords):
@@ -193,7 +192,6 @@ def fitrecords_to_track(fitrecords):
 
 
 def run():
-    global VERBOSE
     parser = argparse.ArgumentParser(description="Plot Garmin Activity on a map")
     parser.add_argument("-i", "--input", help="Input FIT file", required=True, type=str)
     parser.add_argument(
@@ -207,14 +205,18 @@ def run():
     parser.add_argument("-f", "--force", help="Overwrite output file if it exists", action='store_true')
     parser.add_argument("--embed-fit", dest="embed_fit", help="Embed FIT file into the generated HTML page", action='store_true')
     args = parser.parse_args()
-    VERBOSE = args.verbose
+
+    if args.verbose:
+        logger.setLevel(logging.INFO)
 
     output = (
         f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
     )
 
+    logger.info(f"Processing {args.input}")
+
     if os.path.exists(output) and not args.force:
-        print(f"Output file '{output}' already exists, skipping.")
+        logger.warn(f"Output file '{output}' already exists, skipping.")
         return
 
     build_html(args.input, output, embed_fit=args.embed_fit)
