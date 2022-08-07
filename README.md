@@ -21,7 +21,7 @@ Works with python 3.9 and above.
 
 ## Install
 
-`pip install poetry && poetry install`
+`pip install watchmap`
 
 ## Retrieving FIT files
 
