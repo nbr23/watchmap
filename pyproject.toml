@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "watchmap"
-version = "1.0.1"
+version = "1.0.2"
 description = "Plots Activities (run, walk, swim, etc) from a Garmin device"
 license = "GPL3"
 authors = ["nbr23 <max@23.tf>", "bunnie <bunnie@kosagi.com>"]

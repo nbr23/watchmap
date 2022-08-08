@@ -132,7 +132,7 @@ def plot_charts(track):
         )
         current_row += 1
     chartsbuff = io.StringIO()
-    fig.write_html(chartsbuff, full_html=False, default_height="700px")
+    fig.write_html(chartsbuff, full_html=False, default_height="700px", default_width="100%")
     return chartsbuff
 
 def build_html(input_path, output, map=True, embed_fit=False):
