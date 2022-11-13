@@ -1,4 +1,4 @@
-FROM python:3.10-slim-buster as builder
+FROM python:3.11-slim-buster as builder
 
 WORKDIR /usr/src/app
 
@@ -9,7 +9,7 @@ COPY ./pyproject.toml /usr/src/app/
 
 RUN poetry build
 
-FROM python:3.10-slim-buster
+FROM python:3.11-slim-buster
 
 COPY --from=builder /usr/src/app/dist/watchmap* /usr/src/app/
 
