@@ -16,7 +16,7 @@ watchmap = 'watchmap:run'
 python = "^3.9"
 pandas = "^1.4.3"
 matplotlib = "^3.5.2"
-folium = "^0.13.0"
+folium = ">=0.13,<0.15"
 fitparse = "^1.2.0"
 plotly = "^5.9.0"
 
