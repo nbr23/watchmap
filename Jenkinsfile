@@ -1,3 +1,5 @@
+@Library('jenkins-shared-library') _
+
 pipeline {
 	agent any
 
@@ -18,6 +20,13 @@ pipeline {
 				}
 			}
 		}
+		stage('Get Jenkins home source volume') {
+			steps {
+				script {
+					env.JENKINS_HOME_VOL_SRC = getJenkinsDockerHomeVolumeSource();
+				}
+			}
+		}
 		stage('Build Docker Image') {
 			steps {
 				sh '''
@@ -32,8 +41,7 @@ pipeline {
 				sh '''
 				# If we are within docker, we need to hack around to get the volume mount path on the host system for our docker runs down below
 				if docker inspect `hostname` 2>/dev/null; then
-					DOCKER_VOLUME_ROOT=$(docker inspect `hostname` | jq -r '.[0].Mounts | .[] | select(.Destination=="/home/jenkins") | .Source')
-					REAL_PWD=$(echo $PWD | sed "s|/home/jenkins|$DOCKER_VOLUME_ROOT|")
+					REAL_PWD=$(echo $PWD | sed "s|$AGENT_WORKDIR|$JENKINS_HOME_VOL_SRC|")
 				else
 					REAL_PWD=$PWD
 				fi
@@ -47,8 +55,7 @@ pipeline {
 				sh '''
 				# If we are within docker, we need to hack around to get the volume mount path on the host system for our docker runs down below
 				if docker inspect `hostname` 2>/dev/null; then
-					DOCKER_VOLUME_ROOT=$(docker inspect `hostname` | jq -r '.[0].Mounts | .[] | select(.Destination=="/home/jenkins") | .Source')
-					REAL_PWD=$(echo $PWD | sed "s|/home/jenkins|$DOCKER_VOLUME_ROOT|")
+					REAL_PWD=$(echo $PWD | sed "s|$AGENT_WORKDIR|$JENKINS_HOME_VOL_SRC|")
 				else
 					REAL_PWD=$PWD
 				fi
