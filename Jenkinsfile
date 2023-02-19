@@ -13,6 +13,13 @@ pipeline {
 				checkout scm
 			}
 		}
+		stage('Prep buildx') {
+				steps {
+						script {
+								env.BUILDX_BUILDER = getBuildxBuilder();
+						}
+				}
+		}
 		stage('Dockerhub login') {
 			steps {
 				withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW')]) {
@@ -29,11 +36,9 @@ pipeline {
 		}
 		stage('Build Docker Image') {
 			steps {
-				sh '''
-					BUILDER=`docker buildx create --use`
-					docker buildx build --platform linux/amd64,linux/arm64 -t nbr23/watchmap:latest --push .
-					docker buildx rm $BUILDER
-					'''
+				sh """
+					docker buildx build --builder \$BUILDX_BUILDER --platform linux/amd64,linux/arm64 -t nbr23/watchmap:latest ${GIT_BRANCH == "master" ? "--push":""} .
+					"""
 			}
 		}
 		stage('Build python release') {
@@ -68,6 +73,8 @@ pipeline {
 	post {
 		always {
 			sh 'docker logout'
+			sh 'docker buildx stop $BUILDX_BUILDER || true'
+			sh 'docker buildx rm $BUILDX_BUILDER'
 			sh "sudo rm -rf ./dist"
 		}
 	}
