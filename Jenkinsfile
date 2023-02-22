@@ -68,11 +68,16 @@ pipeline {
 				'''
 			}
 		}
+		stage('Sync github repo') {
+				when { branch 'master' }
+				steps {
+						syncRemoteBranch('git@github.com:nbr23/watchmap.git', 'master')
+				}
+		}
 	}
 
 	post {
 		always {
-			sh 'docker logout'
 			sh 'docker buildx stop $BUILDX_BUILDER || true'
 			sh 'docker buildx rm $BUILDX_BUILDER'
 			sh "sudo rm -rf ./dist"
