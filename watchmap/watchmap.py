@@ -210,9 +210,16 @@ def run():
     if args.verbose:
         logger.setLevel(logging.INFO)
 
-    output = (
-        f"{args.output_dir}/{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"
-    )
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
+    output = '/'.join([
+        e for e in (
+            args.output_dir.split('/')
+            + [f"{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"]
+        )
+        if e != ''
+        ])
 
     logger.info(f"Processing {args.input}")
 
