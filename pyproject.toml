@@ -14,7 +14,7 @@ watchmap = 'watchmap:run'
 
 [tool.poetry.dependencies]
 python = "^3.6"
-pandas = "^1.4.3"
+pandas = "^2.0.0"
 matplotlib = "^3.5.2"
 folium = "^0.14.0"
 fitparse = "^1.2.0"
