@@ -60,7 +60,7 @@ pipeline {
 			}
 		}
 		stage('Publish pypi package') {
-			when { expression { sh([returnStdout: true, script: "git tag -l --contains $GIT_COMMIT | grep '^v' || true"]) } }
+			when { branch 'master' }
 			steps {
 				sh '''
 				# If we are within docker, we need to hack around to get the volume mount path on the host system for our docker runs down below
