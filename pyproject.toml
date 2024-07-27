@@ -17,7 +17,7 @@ python = "^3.6"
 pandas = "^2.1.1"
 matplotlib = "^3.8.0"
 folium = "^0.14.0"
-fitparse = "^1.2.0"
+fitparse = { git = "https://github.com/nbr23/python-fitparse.git", branch = "master" }
 plotly = "^5.17.0"
 
 [tool.poetry.dev-dependencies]
