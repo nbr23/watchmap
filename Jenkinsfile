@@ -10,6 +10,7 @@ pipeline {
 
 	environment {
 		PYPI_TOKEN = credentials('pypi_token')
+		PACKAGE_NAME =  "watchmap"
 	}
 
 	stages {
@@ -70,7 +71,10 @@ pipeline {
 				else
 					REAL_PWD=$PWD
 				fi
-				docker run --rm -v $REAL_PWD:/app -w /app python:3-slim-buster bash -c "pip install poetry && poetry publish -n -u __token__ -p $PYPI_TOKEN"
+				version=$(cat pyproject.toml | awk -F'"' '/^version/ {print $2}' | head -n 1)
+				if [ $(curl -s -o /dev/null -w "%{http_code}" https://pypi.org/pypi/$PACKAGE_NAME/$version/json) -ne 200 ]; then
+					docker run --rm -v $REAL_PWD:/app -w /app python:3-slim-buster bash -c "pip install poetry && poetry publish -n -u __token__ -p $PYPI_TOKEN"
+				fi
 				'''
 			}
 		}
