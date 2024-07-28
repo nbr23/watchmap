@@ -42,7 +42,8 @@ pipeline {
 		stage('Build Docker Image') {
 			steps {
 				sh """
-					docker buildx build --builder \$BUILDX_BUILDER --platform linux/amd64,linux/arm64 -t nbr23/watchmap:latest ${GIT_BRANCH == "master" ? "--push":""} .
+					version=\$(cat pyproject.toml | awk -F'"' '/^version/ {print \$2}' | head -n 1)
+					docker buildx build --builder \$BUILDX_BUILDER --platform linux/amd64,linux/arm64 -t nbr23/watchmap:latest -t nbr23/watchmap:\$version ${GIT_BRANCH == "master" ? "--push":""} .
 					"""
 			}
 		}
