@@ -16,6 +16,7 @@ from plotly.subplots import make_subplots
 from jinja2 import Template
 import base64
 import logging
+import importlib.metadata
 
 AVAILABLE_METRICS = {
     "enhanced_altitude": {
@@ -203,6 +204,7 @@ def run():
         required=True,
     )
     parser.add_argument("-v", "--verbose", action='store_true')
+    parser.add_argument("-V", "--version", action='version', version=f"watchmap v{importlib.metadata.version('watchmap')}")
     parser.add_argument("-f", "--force", help="Overwrite output file if it exists", action='store_true')
     parser.add_argument("--embed-fit", dest="embed_fit", help="Embed FIT file into the generated HTML page", action='store_true')
     args = parser.parse_args()
