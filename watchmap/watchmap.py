@@ -210,6 +210,7 @@ def run():
     args = parser.parse_args()
 
     if args.verbose:
+        print(f"watchmap v{importlib.metadata.version('watchmap')}")
         logger.setLevel(logging.INFO)
 
     if not os.path.exists(args.output_dir):
