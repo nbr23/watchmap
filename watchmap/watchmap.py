@@ -215,13 +215,7 @@ def run():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
-    output = '/'.join([
-        e for e in (
-            args.output_dir.split('/')
-            + [f"{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html"]
-        )
-        if e != ''
-        ])
+    output = os.path.join(args.output_dir, f"{'.'.join(args.input.split('/')[-1].split('.')[:-1])}.html")
 
     logger.info(f"Processing {args.input}")
 
